@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA with Hash Routing + iFrames</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        iframe { border: 2px solid #333; margin: 10px 0; width: 100%; height: 300px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        nav { background: #333; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+        nav a { color: #fff; text-decoration: none; padding: 8px 16px; margin: 0 4px; border-radius: 4px; cursor: pointer; }
+        nav a:hover, nav a.active { background: #7B1FA2; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1565C0; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .auto-data { background: #F3E5F5; padding: 10px; border-radius: 4px; margin: 5px 0; }
+        .detail-panel { background: #E8F5E9; padding: 15px; border-radius: 8px; margin: 10px 0; display: none; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">← Back to all scenarios</a>
+    <h1>7. SPA with Hash Routing + iFrames</h1>
+
+    <nav>
+        <a id="nav-home" href="#home">Home</a>
+        <a id="nav-page1" href="#page1">Page 1</a>
+        <a id="nav-page2" href="#page2">Page 2</a>
+        <a id="nav-page3" href="#page3">Page 3</a>
+    </nav>
+
+    <!-- HOME VIEW -->
+    <div id="view-home" class="view">
+        <h2>Home</h2>
+        <p>Welcome to the SPA hash routing demo. Navigate between views to see different iframe and resource loading patterns.</p>
+        <div id="home-auto"></div>
+        <button id="btn-home-quick-fetch">Quick Fetch</button>
+        <div id="home-dynamic"></div>
+    </div>
+
+    <!-- PAGE 1 VIEW -->
+    <div id="view-page1" class="view">
+        <h2>Page 1 — Same-Origin iFrame + Fetch</h2>
+        <div id="page1-auto"></div>
+        <div id="page1-iframe-container"></div>
+        <button id="btn-spa1-load-data">Load Data</button>
+        <button id="btn-spa1-add-image">Add Image</button>
+        <div id="page1-dynamic"></div>
+    </div>
+
+    <!-- PAGE 2 VIEW -->
+    <div id="view-page2" class="view">
+        <h2>Page 2 — Cross-Origin iFrame + Images</h2>
+        <div id="page2-auto"></div>
+        <div id="page2-iframe-container"></div>
+        <button id="btn-spa2-send-xhr">Send XHR</button>
+        <button id="btn-spa2-toggle-details">Toggle Details</button>
+        <div id="detail-panel" class="detail-panel">
+            <h3>Detail Panel</h3>
+            <p>This panel is toggled by the button above. It demonstrates DOM manipulation within a SPA view.</p>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt.</p>
+        </div>
+        <div id="page2-dynamic"></div>
+    </div>
+
+    <!-- PAGE 3 VIEW -->
+    <div id="view-page3" class="view">
+        <h2>Page 3 — Both iFrames + Parallel Fetches</h2>
+        <div id="page3-auto"></div>
+        <div id="page3-iframe-container"></div>
+        <button id="btn-spa3-fetch-all">Fetch All</button>
+        <button id="btn-spa3-clear">Clear</button>
+        <div id="page3-dynamic"></div>
+    </div>
+
+    <script>
+        var views = ["home", "page1", "page2", "page3"];
+
+        function navigate(hash) {
+            var viewName = hash.replace("#", "") || "home";
+            if (views.indexOf(viewName) === -1) viewName = "home";
+
+            // Hide all views, show active
+            views.forEach(function (v) {
+                document.getElementById("view-" + v).classList.remove("active");
+                var navEl = document.getElementById("nav-" + v);
+                if (navEl) navEl.classList.remove("active");
+            });
+            document.getElementById("view-" + viewName).classList.add("active");
+            var activeNav = document.getElementById("nav-" + viewName);
+            if (activeNav) activeNav.classList.add("active");
+
+            // Rebuild the active view on every navigation so waterfall
+            // analysis sees fresh iframe loads and network requests.
+            resetView(viewName);
+            loadAutoResources(viewName);
+        }
+
+        function resetView(viewName) {
+            switch (viewName) {
+                case "home":
+                    document.getElementById("home-auto").innerHTML = "";
+                    document.getElementById("home-dynamic").innerHTML = "";
+                    break;
+
+                case "page1":
+                    document.getElementById("page1-auto").innerHTML = "";
+                    document.getElementById("page1-iframe-container").innerHTML = "";
+                    document.getElementById("page1-dynamic").innerHTML = "";
+                    break;
+
+                case "page2":
+                    document.getElementById("page2-auto").innerHTML = "";
+                    document.getElementById("page2-iframe-container").innerHTML = "";
+                    document.getElementById("page2-dynamic").innerHTML = "";
+                    document.getElementById("detail-panel").style.display = "none";
+                    break;
+
+                case "page3":
+                    document.getElementById("page3-auto").innerHTML = "";
+                    document.getElementById("page3-iframe-container").innerHTML = "";
+                    document.getElementById("page3-dynamic").innerHTML = "";
+                    break;
+            }
+        }
+
+        function loadAutoResources(viewName) {
+            switch (viewName) {
+                case "home":
+                    // AUTO: fetch /posts/1
+                    fetch("https://jsonplaceholder.typicode.com/posts/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("home-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /posts/1:</em> ' + data.title + '</div>'
+                            );
+                        });
+                    break;
+
+                case "page1":
+                    // AUTO: fetch /users/1
+                    fetch("https://jsonplaceholder.typicode.com/users/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("page1-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /users/1:</em> ' + data.name + '</div>'
+                            );
+                        });
+                    // AUTO: same-origin iframe (blob-based for SPA)
+                    var iframeHtml = '<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;padding:15px;background:#FAFAFA;}button{padding:8px 16px;cursor:pointer;margin:5px;}</style></head><body>' +
+                        '<h3>Same-Origin iFrame (SPA Page 1)</h3>' +
+                        '<p>This iframe was created dynamically within the SPA.</p>' +
+                        '<button onclick="alert(\'Button in SPA iframe clicked!\')">Click Me</button>' +
+                        '<div id="d"></div>' +
+                        '<script>fetch("https://jsonplaceholder.typicode.com/todos/1").then(r=>r.json()).then(d=>{document.getElementById("d").innerHTML="<p>Auto todo: "+d.title+"</p>"});<\/script>' +
+                        '</body></html>';
+                    var blob = new Blob([iframeHtml], { type: "text/html" });
+                    var iframe = document.createElement("iframe");
+                    iframe.src = URL.createObjectURL(blob);
+                    iframe.style.cssText = "border:2px solid #333;margin:10px 0;width:100%;height:200px;";
+                    document.getElementById("page1-iframe-container").appendChild(iframe);
+                    break;
+
+                case "page2":
+                    // AUTO: fetch /todos/1
+                    fetch("https://jsonplaceholder.typicode.com/todos/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("page2-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /todos/1:</em> ' + data.title + '</div>'
+                            );
+                        });
+                    // AUTO: cross-origin iframe
+                    var iframe2 = document.createElement("iframe");
+                    iframe2.src = "https://kasiagd.github.io/DEM-19149/cross-origin-iframe-with-resources/";
+                    iframe2.style.cssText = "border:2px solid #333;margin:10px 0;width:100%;height:300px;";
+                    document.getElementById("page2-iframe-container").appendChild(iframe2);
+                    // AUTO: image
+                    var img = document.createElement("img");
+                    img.src = "https://images.unsplash.com/photo-1548620848-d375c7919ea2?q=80&w=800&auto=format&fit=crop";
+                    img.alt = "Unsplash auto-load SPA page2";
+                    img.style.cssText = "max-width:100%;height:auto;margin:10px 0;";
+                    document.getElementById("page2-auto").appendChild(img);
+                    break;
+
+                case "page3":
+                    // AUTO: fetch /posts/1
+                    fetch("https://jsonplaceholder.typicode.com/posts/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("page3-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /posts/1:</em> ' + data.title + '</div>'
+                            );
+                        });
+                    // AUTO: same-origin blob iframe
+                    var iframeHtml3 = '<!DOCTYPE html><html><body style="font-family:Arial;padding:10px;background:#FAFAFA;"><h3>Same-Origin iFrame (SPA Page 3)</h3><p>Blob iframe with auto fetch.</p><div id="d"></div><script>fetch("https://jsonplaceholder.typicode.com/users/1").then(r=>r.json()).then(d=>{document.getElementById("d").innerHTML="<p>User: "+d.name+"</p>"});<\/script></body></html>';
+                    var blob3 = new Blob([iframeHtml3], { type: "text/html" });
+                    var iframeSame = document.createElement("iframe");
+                    iframeSame.src = URL.createObjectURL(blob3);
+                    iframeSame.style.cssText = "border:2px solid #333;margin:5px 0;width:100%;height:150px;";
+                    document.getElementById("page3-iframe-container").appendChild(iframeSame);
+                    // AUTO: cross-origin iframe
+                    var iframeCross = document.createElement("iframe");
+                    iframeCross.src = "https://kasiagd.github.io/DEM-19149/cross-origin-iframe-with-resources/";
+                    iframeCross.style.cssText = "border:2px solid #333;margin:5px 0;width:100%;height:300px;";
+                    document.getElementById("page3-iframe-container").appendChild(iframeCross);
+                    break;
+            }
+        }
+
+        // --- BUTTON HANDLERS ---
+
+        // HOME: Quick Fetch → /comments/1
+        document.getElementById("btn-home-quick-fetch").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/comments/1")
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("home-dynamic").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Quick fetch comment: " + data.name + "\n" + data.email + "</pre>"
+                    );
+                });
+        });
+
+        // PAGE 1: Load Data → /albums/1
+        document.getElementById("btn-spa1-load-data").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/albums/1")
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("page1-dynamic").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Loaded album: " + JSON.stringify(data, null, 2) + "</pre>"
+                    );
+                });
+        });
+
+        // PAGE 1: Add Image
+        document.getElementById("btn-spa1-add-image").addEventListener("click", function () {
+            var img = document.createElement("img");
+            img.src = "https://picsum.photos/400/250?random=" + Date.now();
+            img.alt = "Dynamic image SPA page1";
+            document.getElementById("page1-dynamic").appendChild(img);
+        });
+
+        // PAGE 2: Send XHR → /photos/1
+        document.getElementById("btn-spa2-send-xhr").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://jsonplaceholder.typicode.com/photos/1");
+            xhr.onload = function () {
+                var data = JSON.parse(xhr.responseText);
+                document.getElementById("page2-dynamic").insertAdjacentHTML(
+                    "beforeend",
+                    "<pre>XHR photo: " + data.title + "\nURL: " + data.url + "</pre>"
+                );
+            };
+            xhr.send();
+        });
+
+        // PAGE 2: Toggle Details
+        document.getElementById("btn-spa2-toggle-details").addEventListener("click", function () {
+            var panel = document.getElementById("detail-panel");
+            panel.style.display = panel.style.display === "none" ? "block" : "none";
+        });
+
+        // PAGE 3: Fetch All (parallel)
+        document.getElementById("btn-spa3-fetch-all").addEventListener("click", function () {
+            var container = document.getElementById("page3-dynamic");
+            Promise.all([
+                fetch("https://jsonplaceholder.typicode.com/comments/1").then(r => r.json()),
+                fetch("https://jsonplaceholder.typicode.com/albums/1").then(r => r.json()),
+                fetch("https://jsonplaceholder.typicode.com/photos/1").then(r => r.json())
+            ]).then(function (results) {
+                container.insertAdjacentHTML(
+                    "beforeend",
+                    "<pre>Parallel fetch results:\n" +
+                    "Comment: " + results[0].name + "\n" +
+                    "Album: " + results[1].title + "\n" +
+                    "Photo: " + results[2].title + "</pre>"
+                );
+            });
+        });
+
+        // PAGE 3: Clear dynamic content
+        document.getElementById("btn-spa3-clear").addEventListener("click", function () {
+            document.getElementById("page3-dynamic").innerHTML = "";
+        });
+
+        // --- ROUTING ---
+        window.addEventListener("hashchange", function () {
+            navigate(location.hash);
+        });
+
+        // Initial navigation
+        navigate(location.hash || "#home");
+    </script>
+</body>
+</html>

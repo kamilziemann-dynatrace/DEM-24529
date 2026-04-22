@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFrame Test Scenarios — DEM-24529</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .scenarios { display: grid; gap: 16px; }
+        .card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #4CAF50;
+        }
+        .card h2 { margin: 0 0 8px; font-size: 18px; color: #333; }
+        .card p { margin: 0; font-size: 14px; color: #666; }
+        .card .tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 6px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .tag-iframe { background: #E3F2FD; color: #1565C0; }
+        .tag-fetch { background: #FFF3E0; color: #E65100; }
+        .tag-nav { background: #E8F5E9; color: #2E7D32; }
+        .tag-spa { background: #F3E5F5; color: #7B1FA2; }
+        .tag-nested { background: #FBE9E7; color: #BF360C; }
+    </style>
+</head>
+<body>
+    <h1>iFrame Test Scenarios</h1>
+    <p class="subtitle">DEM-24529 — Test pages for Dynatrace Synthetic Monitoring waterfall analysis</p>
+
+    <div class="scenarios">
+        <a class="card" id="link-cross-origin-iframe" href="cross-origin-iframe-with-resources/index.html">
+            <h2>1. Cross-Origin iFrame with Resources</h2>
+            <p>Cross-origin iframe (CodePen) + external images (Unsplash, WebP) + inline SVG. Buttons to fetch data and load images dynamically.</p>
+            <span class="tag tag-iframe">cross-origin iframe</span>
+            <span class="tag tag-fetch">images</span>
+        </a>
+
+        <a class="card" id="link-same-origin-iframe" href="same-origin-iframe/index.html">
+            <h2>2. Same-Origin iFrame</h2>
+            <p>Same-origin iframe with its own resources. Auto-loads image + fetch on page load. Buttons for XHR, dynamic image loading, and panel toggle.</p>
+            <span class="tag tag-iframe">same-origin iframe</span>
+            <span class="tag tag-fetch">fetch + XHR</span>
+        </a>
+
+        <a class="card" id="link-cross-origin-nav" href="cross-origin-iframe-navigation/index.html">
+            <h2>3. Cross-Origin iFrame with Navigation</h2>
+            <p>3-page navigation flow. Each page loads a different cross-origin iframe + resources. Navigate between pages to see waterfall per page load.</p>
+            <span class="tag tag-iframe">cross-origin iframe</span>
+            <span class="tag tag-nav">multi-page navigation</span>
+            <span class="tag tag-fetch">fetch + XHR</span>
+        </a>
+
+        <a class="card" id="link-nested-iframes" href="nested-iframes/index.html">
+            <h2>4. Nested iFrames</h2>
+            <p>3-level nesting: outer page → same-origin middle iframe → same-origin inner iframe. Each level loads its own resources and has interactive buttons.</p>
+            <span class="tag tag-nested">nested 3-level</span>
+            <span class="tag tag-iframe">mixed origins</span>
+            <span class="tag tag-fetch">fetch per level</span>
+        </a>
+
+        <a class="card" id="link-mixed-iframes" href="mixed-iframes/index.html">
+            <h2>5. Mixed iFrames (Same + Cross Origin)</h2>
+            <p>Single page with both same-origin and cross-origin iframes side by side. SVG, images, fetch, XHR. Toggle iframe visibility.</p>
+            <span class="tag tag-iframe">same + cross origin</span>
+            <span class="tag tag-fetch">fetch + XHR</span>
+        </a>
+
+        <a class="card" id="link-iframe-with-fetch" href="iframe-with-fetch/index.html">
+            <h2>6. iFrame with Heavy Fetch Activity</h2>
+            <p>Both parent and iframe actively fetch data. Auto-loads fetch + XHR on page load. More fetches triggered by buttons. Cross-origin iframe included.</p>
+            <span class="tag tag-iframe">same + cross origin</span>
+            <span class="tag tag-fetch">heavy fetch + XHR</span>
+        </a>
+
+        <a class="card" id="link-spa-hash" href="spa-hash-iframe/index.html">
+            <h2>7. SPA with Hash Routing + iFrames</h2>
+            <p>Single-page app using hash (#) routing. Each view loads different iframes and resources dynamically without page reload. 4 views: home, page1, page2, page3.</p>
+            <span class="tag tag-spa">SPA hash routing</span>
+            <span class="tag tag-iframe">dynamic iframes</span>
+            <span class="tag tag-fetch">fetch per view</span>
+        </a>
+
+        <a class="card" id="link-spa-history" href="spa-history-iframe/index.html">
+            <h2>8. SPA with History API + iFrames</h2>
+            <p>Single-page app using History API (pushState). Views: home, dashboard, reports, settings. Each loads different iframes and resources. Back/forward navigation supported.</p>
+            <span class="tag tag-spa">SPA History API</span>
+            <span class="tag tag-iframe">dynamic iframes</span>
+            <span class="tag tag-fetch">fetch + XHR + POST</span>
+        </a>
+    </div>
+</body>
+</html>

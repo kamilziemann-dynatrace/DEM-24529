@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mixed iFrames (Same + Cross Origin)</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        iframe { border: 2px solid #333; margin: 10px 0; width: 100%; height: 300px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1565C0; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .actions { margin: 20px 0; }
+        #dynamic-content { margin: 20px 0; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .iframe-label { font-weight: bold; margin-top: 20px; color: #333; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">← Back to all scenarios</a>
+    <h1>5. Mixed iFrames (Same + Cross Origin)</h1>
+
+    <!-- AUTO: images + SVG -->
+    <img src="https://images.unsplash.com/photo-1548620848-d375c7919ea2?q=80&w=800&auto=format&fit=crop" alt="Unsplash auto-load">
+    <svg width="120" height="60" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:10px 0;">
+        <rect width="120" height="60" fill="#E8F5E9" rx="8"/>
+        <text x="60" y="35" text-anchor="middle" fill="#2E7D32" font-size="14" font-family="Arial">SVG</text>
+    </svg>
+
+    <!-- AUTO: same-origin iframe -->
+    <p class="iframe-label">Same-Origin iFrame:</p>
+    <div id="same-origin-wrapper">
+        <iframe id="same-origin-iframe" src="local-frame.html"></iframe>
+    </div>
+
+    <!-- AUTO: cross-origin iframe -->
+    <p class="iframe-label">Cross-Origin iFrame (DEM-19149):</p>
+    <iframe id="cross-origin-iframe" src="https://kasiagd.github.io/DEM-19149/cross-origin-iframe-with-resources/"></iframe>
+
+    <!-- INTERACTIVE -->
+    <div class="actions">
+        <button id="btn-fetch-data">Fetch Data</button>
+        <button id="btn-send-xhr">Send XHR</button>
+        <button id="btn-load-more-images">Load More Images</button>
+        <button id="btn-toggle-iframe">Toggle iFrame</button>
+    </div>
+
+    <div id="dynamic-content"></div>
+
+    <script>
+        // AUTO: fetch on page load — /posts/1
+        fetch("https://jsonplaceholder.typicode.com/posts/1")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("dynamic-content").insertAdjacentHTML(
+                    "beforeend",
+                    "<p><em>Auto-loaded post:</em> " + data.title + "</p>"
+                );
+            });
+
+        // ON-CLICK: fetch /comments/1
+        document.getElementById("btn-fetch-data").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/comments/1")
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("dynamic-content").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Fetched comment: " + data.name + "\n" + data.body.substring(0, 100) + "</pre>"
+                    );
+                });
+        });
+
+        // ON-CLICK: XHR /albums/1
+        document.getElementById("btn-send-xhr").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://jsonplaceholder.typicode.com/albums/1");
+            xhr.onload = function () {
+                var data = JSON.parse(xhr.responseText);
+                document.getElementById("dynamic-content").insertAdjacentHTML(
+                    "beforeend",
+                    "<pre>XHR album: " + JSON.stringify(data, null, 2) + "</pre>"
+                );
+            };
+            xhr.send();
+        });
+
+        // ON-CLICK: load 2 dynamic images
+        document.getElementById("btn-load-more-images").addEventListener("click", function () {
+            var container = document.getElementById("dynamic-content");
+            var img1 = document.createElement("img");
+            img1.src = "https://picsum.photos/400/200?random=" + Date.now();
+            img1.alt = "Dynamic image 1";
+            container.appendChild(img1);
+
+            var img2 = document.createElement("img");
+            img2.src = "https://www.gstatic.com/webp/gallery/2.webp";
+            img2.alt = "Dynamic image 2";
+            container.appendChild(img2);
+        });
+
+        // ON-CLICK: toggle same-origin iframe visibility
+        document.getElementById("btn-toggle-iframe").addEventListener("click", function () {
+            var wrapper = document.getElementById("same-origin-wrapper");
+            wrapper.style.display = wrapper.style.display === "none" ? "block" : "none";
+        });
+    </script>
+</body>
+</html>

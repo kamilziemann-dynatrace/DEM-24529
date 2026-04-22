@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nested iFrames — Outer Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        iframe { border: 2px solid #333; margin: 20px 0; width: 100%; height: 500px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1565C0; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .actions { margin: 20px 0; }
+        #dynamic-content { margin: 20px 0; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .level-indicator { background: #E8F5E9; border-left: 4px solid #4CAF50; padding: 10px 15px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">← Back to all scenarios</a>
+    <h1>4. Nested iFrames</h1>
+    <div class="level-indicator"><strong>Level 0 — Outer Page</strong> (this page)</div>
+
+    <!-- AUTO: image -->
+    <img src="https://images.unsplash.com/photo-1548620848-d375c7919ea2?q=80&w=800&auto=format&fit=crop" alt="Unsplash auto-load">
+
+    <!-- AUTO: same-origin iframe (middle layer) -->
+    <h2>Middle iFrame (same-origin) — contains local inner iFrame</h2>
+    <iframe id="middle-iframe" src="middle-frame.html"></iframe>
+
+    <!-- INTERACTIVE -->
+    <div class="actions">
+        <button id="btn-parent-fetch">Fetch from Parent</button>
+        <button id="btn-parent-add-image">Add Image</button>
+    </div>
+
+    <div id="dynamic-content"></div>
+
+    <script>
+        // AUTO: fetch on page load — /posts/1
+        fetch("https://jsonplaceholder.typicode.com/posts/1")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("dynamic-content").insertAdjacentHTML(
+                    "beforeend",
+                    "<p><em>Auto-loaded (outer) post:</em> " + data.title + "</p>"
+                );
+            });
+
+        // ON-CLICK: fetch /albums/1
+        document.getElementById("btn-parent-fetch").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/albums/1")
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("dynamic-content").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Parent fetched album: " + JSON.stringify(data, null, 2) + "</pre>"
+                    );
+                });
+        });
+
+        // ON-CLICK: load dynamic image
+        document.getElementById("btn-parent-add-image").addEventListener("click", function () {
+            var img = document.createElement("img");
+            img.src = "https://picsum.photos/400/250?random=" + Date.now();
+            img.alt = "Dynamically loaded from outer page";
+            document.getElementById("dynamic-content").appendChild(img);
+        });
+    </script>
+</body>
+</html>

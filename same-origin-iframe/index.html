@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Same-Origin iFrame</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        iframe { border: 2px solid #333; margin: 20px 0; width: 100%; height: 350px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+        img { max-width: 100%; height: auto; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1565C0; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .actions { margin: 20px 0; }
+        #dynamic-content { margin: 20px 0; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .panel { background: #E3F2FD; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">← Back to all scenarios</a>
+    <h1>2. Same-Origin iFrame</h1>
+
+    <!-- AUTO: image loaded on page load -->
+    <div>
+        <h2>Auto-loaded Image</h2>
+        <img src="https://images.unsplash.com/photo-1548620848-d375c7919ea2?q=80&w=800&auto=format&fit=crop" alt="Unsplash auto-load">
+    </div>
+
+    <!-- AUTO: same-origin iframe -->
+    <div>
+        <h2>Same-Origin iFrame</h2>
+        <iframe id="same-origin-iframe" src="iframe-content.html"></iframe>
+    </div>
+
+    <!-- INTERACTIVE: buttons -->
+    <div class="actions">
+        <h2>Interactive Actions</h2>
+        <button id="btn-send-xhr">Send XHR</button>
+        <button id="btn-load-image">Load Image</button>
+        <button id="btn-toggle-panel">Toggle Panel</button>
+    </div>
+
+    <div id="toggle-panel" class="panel" style="display:none;">
+        <h3>Hidden Panel</h3>
+        <p>This panel was revealed by clicking "Toggle Panel". It contains some extra content for testing DOM changes.</p>
+    </div>
+
+    <div id="dynamic-content"></div>
+
+    <script>
+        // AUTO: fetch on page load — /todos/1
+        fetch("https://jsonplaceholder.typicode.com/todos/1")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("dynamic-content").insertAdjacentHTML(
+                    "beforeend",
+                    "<p><em>Auto-loaded todo:</em> " + data.title + "</p>"
+                );
+            });
+
+        // ON-CLICK: XHR /comments/1
+        document.getElementById("btn-send-xhr").addEventListener("click", function () {
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://jsonplaceholder.typicode.com/comments/1");
+            xhr.onload = function () {
+                const data = JSON.parse(xhr.responseText);
+                document.getElementById("dynamic-content").insertAdjacentHTML(
+                    "beforeend",
+                    "<pre>XHR comment: " + data.name + "\n" + data.body.substring(0, 100) + "</pre>"
+                );
+            };
+            xhr.send();
+        });
+
+        // ON-CLICK: load dynamic image from picsum
+        document.getElementById("btn-load-image").addEventListener("click", function () {
+            const img = document.createElement("img");
+            img.src = "https://picsum.photos/400/300?random=" + Date.now();
+            img.alt = "Dynamically loaded image";
+            img.style.marginTop = "10px";
+            document.getElementById("dynamic-content").appendChild(img);
+        });
+
+        // ON-CLICK: toggle panel visibility
+        document.getElementById("btn-toggle-panel").addEventListener("click", function () {
+            const panel = document.getElementById("toggle-panel");
+            panel.style.display = panel.style.display === "none" ? "block" : "none";
+        });
+    </script>
+</body>
+</html>

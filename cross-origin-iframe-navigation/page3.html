@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Origin iFrame Navigation — Page 3</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        iframe { border: 2px solid #333; margin: 20px 0; width: 100%; height: 400px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        nav { background: #333; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+        nav a { color: #fff; text-decoration: none; padding: 8px 16px; margin: 0 4px; border-radius: 4px; }
+        nav a:hover, nav a.active { background: #4CAF50; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1565C0; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        .actions { margin: 20px 0; }
+        #dynamic-content { margin: 20px 0; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .counter { font-size: 48px; font-weight: bold; color: #E65100; text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">← Back to all scenarios</a>
+    <h1>3. Cross-Origin iFrame Navigation</h1>
+
+    <nav>
+        <a id="nav-page1" href="index.html">Page 1</a>
+        <a id="nav-page2" href="page2.html">Page 2</a>
+        <a id="nav-page3" href="page3.html" class="active">Page 3</a>
+    </nav>
+
+    <h2>Page 3 — Cross-Origin iFrame (DEM-19149) + Heavy Resources</h2>
+
+    <!-- AUTO: image -->
+    <img src="https://images.unsplash.com/photo-1548620848-d375c7919ea2?q=80&w=800&auto=format&fit=crop" alt="Unsplash auto-load">
+
+    <!-- AUTO: cross-origin iframe -->
+    <iframe id="cross-origin-iframe" src="https://kasiagd.github.io/DEM-19149/cross-origin-iframe-with-resources/"></iframe>
+
+    <!-- INTERACTIVE -->
+    <div class="actions">
+        <button id="btn-fetch-posts">Fetch Posts</button>
+        <button id="btn-load-images">Load Images</button>
+        <button id="btn-show-counter">Show Counter</button>
+    </div>
+
+    <div id="dynamic-content"></div>
+
+    <script>
+        // AUTO: fetch on page load — /todos/1
+        fetch("https://jsonplaceholder.typicode.com/todos/1")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("dynamic-content").insertAdjacentHTML(
+                    "beforeend",
+                    "<p><em>Auto-loaded todo:</em> " + data.title + " (completed: " + data.completed + ")</p>"
+                );
+            });
+
+        // ON-CLICK: fetch multiple posts
+        document.getElementById("btn-fetch-posts").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/posts?_limit=5")
+                .then(r => r.json())
+                .then(posts => {
+                    var html = "<h3>Fetched Posts:</h3><ul>";
+                    posts.forEach(function (p) {
+                        html += "<li><strong>" + p.id + ".</strong> " + p.title + "</li>";
+                    });
+                    html += "</ul>";
+                    document.getElementById("dynamic-content").insertAdjacentHTML("beforeend", html);
+                });
+        });
+
+        // ON-CLICK: load 3 dynamic images
+        document.getElementById("btn-load-images").addEventListener("click", function () {
+            var container = document.getElementById("dynamic-content");
+            var urls = [
+                "https://picsum.photos/400/200?random=" + Date.now(),
+                "https://picsum.photos/400/200?random=" + (Date.now() + 1),
+                "https://www.gstatic.com/webp/gallery/2.webp"
+            ];
+            urls.forEach(function (url) {
+                var img = document.createElement("img");
+                img.src = url;
+                img.alt = "Dynamic gallery image";
+                img.style.display = "block";
+                container.appendChild(img);
+            });
+        });
+
+        // ON-CLICK: show auto-incrementing counter
+        var counterInterval = null;
+        var counterElement = null;
+        document.getElementById("btn-show-counter").addEventListener("click", function () {
+            if (counterInterval) {
+                clearInterval(counterInterval);
+                counterInterval = null;
+                return;
+            }
+            if (!counterElement) {
+                counterElement = document.createElement("div");
+                counterElement.className = "counter";
+                document.getElementById("dynamic-content").appendChild(counterElement);
+            }
+            counterElement.textContent = "0";
+            var count = 0;
+            counterInterval = setInterval(function () {
+                count++;
+                counterElement.textContent = count;
+                if (count >= 99) {
+                    clearInterval(counterInterval);
+                    counterInterval = null;
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

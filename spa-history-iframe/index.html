@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA with History API + iFrames</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        iframe { border: 2px solid #333; margin: 10px 0; width: 100%; height: 300px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        nav { background: #333; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+        nav a { color: #fff; text-decoration: none; padding: 8px 16px; margin: 0 4px; border-radius: 4px; cursor: pointer; }
+        nav a:hover, nav a.active { background: #1565C0; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1565C0; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .auto-data { background: #E3F2FD; padding: 10px; border-radius: 4px; margin: 5px 0; }
+        input, textarea { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; margin: 5px 0; }
+        textarea { height: 80px; resize: vertical; }
+        .form-group { margin: 10px 0; }
+        label { font-weight: bold; display: block; margin-bottom: 4px; }
+        .success-msg { background: #E8F5E9; color: #2E7D32; padding: 10px; border-radius: 4px; margin: 10px 0; display: none; }
+    </style>
+</head>
+<body>
+    <a class="back-link" href="../index.html">← Back to all scenarios</a>
+    <h1>8. SPA with History API + iFrames</h1>
+
+    <nav>
+        <a id="nav-home" data-view="home">Home</a>
+        <a id="nav-dashboard" data-view="dashboard">Dashboard</a>
+        <a id="nav-reports" data-view="reports">Reports</a>
+        <a id="nav-settings" data-view="settings">Settings</a>
+    </nav>
+
+    <!-- HOME VIEW -->
+    <div id="view-home" class="view">
+        <h2>Home</h2>
+        <p>Welcome to the SPA History API demo. This app uses <code>pushState</code> with <code>?view=</code> query parameters for GitHub Pages compatibility.</p>
+        <div id="home-auto"></div>
+        <div id="home-image-container"></div>
+        <button id="btn-get-started">Get Started</button>
+        <div id="home-dynamic"></div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="view">
+        <h2>Dashboard</h2>
+        <div id="dashboard-auto"></div>
+        <div id="dashboard-iframe-container"></div>
+        <div id="dashboard-chart-container"></div>
+        <button id="btn-dashboard-refresh">Refresh Data</button>
+        <button id="btn-dashboard-load-chart">Load Chart</button>
+        <div id="dashboard-dynamic"></div>
+    </div>
+
+    <!-- REPORTS VIEW -->
+    <div id="view-reports" class="view">
+        <h2>Reports</h2>
+        <div id="reports-auto"></div>
+        <div id="reports-iframe-container"></div>
+        <button id="btn-reports-generate">Generate Report</button>
+        <button id="btn-reports-export">Export</button>
+        <div id="reports-dynamic"></div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div id="view-settings" class="view">
+        <h2>Settings</h2>
+        <p>Configure your preferences. This view has no iframes and no auto-fetches.</p>
+        <div class="form-group">
+            <label for="setting-name">Display Name</label>
+            <input type="text" id="setting-name" placeholder="Enter your name">
+        </div>
+        <div class="form-group">
+            <label for="setting-bio">Bio</label>
+            <textarea id="setting-bio" placeholder="Tell us about yourself"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="setting-theme">Theme</label>
+            <input type="text" id="setting-theme" placeholder="light or dark">
+        </div>
+        <button id="btn-settings-save">Save</button>
+        <button id="btn-settings-reset">Reset</button>
+        <div id="settings-success" class="success-msg">Settings saved successfully!</div>
+        <div id="settings-dynamic"></div>
+    </div>
+
+    <script>
+        var viewsList = ["home", "dashboard", "reports", "settings"];
+
+        function getViewFromUrl() {
+            var params = new URLSearchParams(window.location.search);
+            return params.get("view") || "home";
+        }
+
+        function navigateTo(viewName) {
+            if (viewsList.indexOf(viewName) === -1) viewName = "home";
+
+            // Update URL
+            var url = window.location.pathname;
+            if (viewName !== "home") url += "?view=" + viewName;
+            history.pushState({ view: viewName }, "", url);
+
+            renderView(viewName);
+        }
+
+        function renderView(viewName) {
+            // Hide all, show active
+            viewsList.forEach(function (v) {
+                document.getElementById("view-" + v).classList.remove("active");
+                var navEl = document.getElementById("nav-" + v);
+                if (navEl) navEl.classList.remove("active");
+            });
+            document.getElementById("view-" + viewName).classList.add("active");
+            var activeNav = document.getElementById("nav-" + viewName);
+            if (activeNav) activeNav.classList.add("active");
+
+            // Rebuild the active view on every navigation so waterfall
+            // analysis sees fresh iframe loads and network requests.
+            resetView(viewName);
+            loadAutoResources(viewName);
+        }
+
+        function resetView(viewName) {
+            switch (viewName) {
+                case "home":
+                    document.getElementById("home-auto").innerHTML = "";
+                    document.getElementById("home-image-container").innerHTML = "";
+                    document.getElementById("home-dynamic").innerHTML = "";
+                    break;
+
+                case "dashboard":
+                    document.getElementById("dashboard-auto").innerHTML = "";
+                    document.getElementById("dashboard-iframe-container").innerHTML = "";
+                    document.getElementById("dashboard-chart-container").innerHTML = "";
+                    document.getElementById("dashboard-dynamic").innerHTML = "";
+                    break;
+
+                case "reports":
+                    document.getElementById("reports-auto").innerHTML = "";
+                    document.getElementById("reports-iframe-container").innerHTML = "";
+                    document.getElementById("reports-dynamic").innerHTML = "";
+                    break;
+
+                case "settings":
+                    document.getElementById("settings-success").style.display = "none";
+                    document.getElementById("settings-dynamic").innerHTML = "";
+                    break;
+            }
+        }
+
+        function loadAutoResources(viewName) {
+            switch (viewName) {
+                case "home":
+                    // AUTO: fetch /posts/1
+                    fetch("https://jsonplaceholder.typicode.com/posts/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("home-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /posts/1:</em> ' + data.title + '</div>'
+                            );
+                        });
+                    // AUTO: image
+                    var homeImg = document.createElement("img");
+                    homeImg.src = "https://images.unsplash.com/photo-1548620848-d375c7919ea2?q=80&w=800&auto=format&fit=crop";
+                    homeImg.alt = "Unsplash auto-load home";
+                    homeImg.style.cssText = "max-width:100%;height:auto;margin:10px 0;";
+                    document.getElementById("home-image-container").appendChild(homeImg);
+                    break;
+
+                case "dashboard":
+                    // AUTO: fetch /users/1
+                    fetch("https://jsonplaceholder.typicode.com/users/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("dashboard-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /users/1:</em> ' + data.name + ' — ' + data.company.name + '</div>'
+                            );
+                        });
+                    // AUTO: cross-origin iframe
+                    var dashIframe = document.createElement("iframe");
+                    dashIframe.src = "https://kasiagd.github.io/DEM-19149/cross-origin-iframe-with-resources/";
+                    dashIframe.style.cssText = "border:2px solid #333;margin:10px 0;width:100%;height:300px;";
+                    document.getElementById("dashboard-iframe-container").appendChild(dashIframe);
+                    // AUTO: chart image
+                    var chartImg = document.createElement("img");
+                    chartImg.src = "https://picsum.photos/600/200?random=dashboard";
+                    chartImg.alt = "Dashboard chart auto-load";
+                    chartImg.style.cssText = "max-width:100%;height:auto;margin:10px 0;";
+                    document.getElementById("dashboard-chart-container").appendChild(chartImg);
+                    break;
+
+                case "reports":
+                    // AUTO: fetch /posts/1
+                    fetch("https://jsonplaceholder.typicode.com/posts/1")
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById("reports-auto").insertAdjacentHTML(
+                                "beforeend",
+                                '<div class="auto-data"><em>Auto fetch /posts/1:</em> ' + data.title + '</div>'
+                            );
+                        });
+                    // AUTO: same-origin iframe (blob)
+                    var reportIframeHtml = '<!DOCTYPE html><html><body style="font-family:Arial;padding:15px;background:#FAFAFA;"><h3>Reports iFrame</h3><p>This iframe fetches data for report generation.</p><div id="d"></div><script>fetch("https://jsonplaceholder.typicode.com/todos/1").then(r=>r.json()).then(d=>{document.getElementById("d").innerHTML="<p>Report data: "+d.title+"</p>"});<\/script></body></html>';
+                    var blob = new Blob([reportIframeHtml], { type: "text/html" });
+                    var rIframe = document.createElement("iframe");
+                    rIframe.src = URL.createObjectURL(blob);
+                    rIframe.style.cssText = "border:2px solid #333;margin:10px 0;width:100%;height:200px;";
+                    document.getElementById("reports-iframe-container").appendChild(rIframe);
+                    break;
+
+                case "settings":
+                    // No auto resources — just a form
+                    break;
+            }
+        }
+
+        // --- NAV CLICK HANDLERS ---
+        document.querySelectorAll("nav a[data-view]").forEach(function (link) {
+            link.addEventListener("click", function (e) {
+                e.preventDefault();
+                navigateTo(this.getAttribute("data-view"));
+            });
+        });
+
+        // --- BUTTON HANDLERS ---
+
+        // HOME: Get Started → navigate to dashboard
+        document.getElementById("btn-get-started").addEventListener("click", function () {
+            navigateTo("dashboard");
+        });
+
+        // DASHBOARD: Refresh Data → fetch /todos/2
+        document.getElementById("btn-dashboard-refresh").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/todos/2")
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("dashboard-dynamic").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Refreshed todo: " + JSON.stringify(data, null, 2) + "</pre>"
+                    );
+                });
+        });
+
+        // DASHBOARD: Load Chart → dynamic image
+        document.getElementById("btn-dashboard-load-chart").addEventListener("click", function () {
+            var img = document.createElement("img");
+            img.src = "https://picsum.photos/600/200?random=" + Date.now();
+            img.alt = "Dynamic chart image";
+            document.getElementById("dashboard-dynamic").appendChild(img);
+        });
+
+        // REPORTS: Generate Report → XHR /comments?postId=1
+        document.getElementById("btn-reports-generate").addEventListener("click", function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://jsonplaceholder.typicode.com/comments?postId=1");
+            xhr.onload = function () {
+                var comments = JSON.parse(xhr.responseText);
+                var html = "<h3>Generated Report — Comments:</h3><ul>";
+                comments.forEach(function (c) {
+                    html += "<li><strong>" + c.name + "</strong> (" + c.email + ")</li>";
+                });
+                html += "</ul>";
+                document.getElementById("reports-dynamic").insertAdjacentHTML("beforeend", html);
+            };
+            xhr.send();
+        });
+
+        // REPORTS: Export → fetch /albums/1
+        document.getElementById("btn-reports-export").addEventListener("click", function () {
+            fetch("https://jsonplaceholder.typicode.com/albums/1")
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("reports-dynamic").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Exported album data: " + JSON.stringify(data, null, 2) + "</pre>"
+                    );
+                });
+        });
+
+        // SETTINGS: Save → POST to /posts
+        document.getElementById("btn-settings-save").addEventListener("click", function () {
+            var name = document.getElementById("setting-name").value;
+            var bio = document.getElementById("setting-bio").value;
+            var theme = document.getElementById("setting-theme").value;
+            fetch("https://jsonplaceholder.typicode.com/posts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: name, bio: bio, theme: theme })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("settings-success").style.display = "block";
+                    document.getElementById("settings-dynamic").insertAdjacentHTML(
+                        "beforeend",
+                        "<pre>Saved (POST response): " + JSON.stringify(data, null, 2) + "</pre>"
+                    );
+                    setTimeout(function () {
+                        document.getElementById("settings-success").style.display = "none";
+                    }, 3000);
+                });
+        });
+
+        // SETTINGS: Reset → clear form
+        document.getElementById("btn-settings-reset").addEventListener("click", function () {
+            document.getElementById("setting-name").value = "";
+            document.getElementById("setting-bio").value = "";
+            document.getElementById("setting-theme").value = "";
+            document.getElementById("settings-dynamic").innerHTML = "";
+            document.getElementById("settings-success").style.display = "none";
+        });
+
+        // --- POPSTATE (back/forward) ---
+        window.addEventListener("popstate", function (e) {
+            var viewName = e.state ? e.state.view : getViewFromUrl();
+            renderView(viewName);
+        });
+
+        // --- INITIAL LOAD ---
+        var initialView = getViewFromUrl();
+        renderView(initialView);
+    </script>
+</body>
+</html>
