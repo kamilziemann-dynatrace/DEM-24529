@@ -1,0 +1,6 @@
+{
+    "name": "before-navigation",
+    "scenario": "page-load-triggered-in-xhr-callback",
+    "step": 1,
+    "message": "The callback of this XHR will trigger a page navigation."
+}

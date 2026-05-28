@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XHR Lifecycle Patterns</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="page-shell">
+        <h1>XHR Lifecycle Patterns</h1>
+        <p class="lede">Standalone static test pages for three Synthetic or RUM correlation scenarios. This folder is self-contained and does not need to be linked from the root landing page.</p>
+
+        <div class="note">
+            <strong>GitHub Pages:</strong> all URLs here are relative, so the folder works under a project site path such as <code>/DEM-24529/xhr-lifecycle-patterns/</code>.
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <span class="badge">Launcher</span>
+                <h2>0. All-in-One Manual Launcher</h2>
+                <p>One place to launch or preview all three patterns manually without changing the root landing page.</p>
+                <p><a href="all-in-one.html">Open all-in-one launcher</a></p>
+            </div>
+
+            <div class="card">
+                <span class="badge">XHR sequence</span>
+                <h2>1. XHR triggered in callback of XHR</h2>
+                <p>First request completes, then the second XHR is started directly inside the first callback.</p>
+                <p><a href="xhr-triggered-in-callback-of-xhr.html">Open scenario page</a></p>
+                <p><code>xhr-triggered-in-callback-of-xhr.html?autorun=1</code></p>
+            </div>
+
+            <div class="card">
+                <span class="badge">Load phase</span>
+                <h2>2. XHR triggered in load-phase of a page load</h2>
+                <p>The XHR starts from the initial page lifecycle, specifically in <code>DOMContentLoaded</code>.</p>
+                <p><a href="xhr-triggered-in-load-phase-of-page-load.html">Open scenario page</a></p>
+            </div>
+
+            <div class="card">
+                <span class="badge">Navigation</span>
+                <h2>3. Page load triggered in XHR callback</h2>
+                <p>After the XHR completes, the callback navigates to a separate HTML page.</p>
+                <p><a href="page-load-triggered-in-xhr-callback.html">Open scenario page</a></p>
+                <p><code>page-load-triggered-in-xhr-callback.html?autorun=1</code></p>
+            </div>
+
+            <div class="card">
+                <span class="badge">Synthetic</span>
+                <h2>4. Dynatrace Synthetic Flow</h2>
+                <p>Short step-by-step guidance for running these pages as separate Synthetic tests and interpreting them cleanly.</p>
+                <p><a href="synthetic-monitoring-guide.html">Open Synthetic guide</a></p>
+            </div>
+        </div>
+
+        <div class="details">
+            <strong>Recommended Synthetic setup:</strong>
+            <ul>
+                <li>Target a specific scenario page instead of the index page when you want a single, repeatable waterfall.</li>
+                <li>Use <code>?autorun=1</code> on the two pages that otherwise start from a button click.</li>
+                <li>Keep the JSON fixtures same-origin and relative, because GitHub Pages will then serve them without CORS noise.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

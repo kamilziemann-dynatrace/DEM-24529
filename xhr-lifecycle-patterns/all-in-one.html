@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All-in-One XHR Lifecycle Launcher</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="back-link" href="index.html">← Back to XHR lifecycle patterns</a>
+
+    <div class="page-shell">
+        <h1>All-in-One Manual Launcher</h1>
+        <p class="lede">Use this page when you want one control surface for manual testing. For Synthetic, still point the monitor directly at the dedicated scenario page.</p>
+
+        <div class="note">
+            <strong>Important:</strong> the inline preview loads the dedicated scenario in an iframe for convenience. That is useful for manual testing, but it is not the cleanest mode for Synthetic waterfall analysis.
+        </div>
+
+        <div id="launcher-status" class="status-box">Choose a scenario to load in the preview.</div>
+
+        <div class="grid two-columns">
+            <div class="card" data-scenario-card>
+                <span class="badge">XHR sequence</span>
+                <h2>1. XHR triggered in callback of XHR</h2>
+                <p>Manual preview or direct open of the dedicated page.</p>
+                <div class="button-row">
+                    <button data-load-preview="xhr-triggered-in-callback-of-xhr.html?autorun=1">Load preview</button>
+                    <a class="button-link ghost" href="xhr-triggered-in-callback-of-xhr.html?autorun=1">Open dedicated page</a>
+                </div>
+                <span class="inline-code"><code>xhr-triggered-in-callback-of-xhr.html?autorun=1</code></span>
+            </div>
+
+            <div class="card" data-scenario-card>
+                <span class="badge">Load phase</span>
+                <h2>2. XHR triggered in load-phase of a page load</h2>
+                <p>The preview reloads the dedicated page so the request starts from its own lifecycle.</p>
+                <div class="button-row">
+                    <button data-load-preview="xhr-triggered-in-load-phase-of-page-load.html">Load preview</button>
+                    <a class="button-link ghost" href="xhr-triggered-in-load-phase-of-page-load.html">Open dedicated page</a>
+                </div>
+                <span class="inline-code"><code>xhr-triggered-in-load-phase-of-page-load.html</code></span>
+            </div>
+
+            <div class="card" data-scenario-card>
+                <span class="badge">Navigation</span>
+                <h2>3. Page load triggered in XHR callback</h2>
+                <p>The preview will show the dedicated page and then its navigation to the target page inside the iframe.</p>
+                <div class="button-row">
+                    <button data-load-preview="page-load-triggered-in-xhr-callback.html?autorun=1">Load preview</button>
+                    <a class="button-link ghost" href="page-load-triggered-in-xhr-callback.html?autorun=1">Open dedicated page</a>
+                </div>
+                <span class="inline-code"><code>page-load-triggered-in-xhr-callback.html?autorun=1</code></span>
+            </div>
+
+            <div class="card">
+                <span class="badge">Synthetic</span>
+                <h2>Recommended usage</h2>
+                <p>Use this launcher for quick manual checks, then use the dedicated scenario URLs in your monitor definition.</p>
+                <div class="button-row">
+                    <a class="button-link secondary" href="synthetic-monitoring-guide.html">Open Synthetic guide</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="details">
+            <strong>Preview area:</strong>
+            <div class="meta-list">
+                <div class="meta-item">The preview iframe preserves this launcher page, so you can switch scenarios without navigating away.</div>
+                <div class="meta-item">For the navigation scenario, the iframe itself will move to <code>next-page.html</code>. For Synthetic, use the dedicated top-level page instead.</div>
+            </div>
+        </div>
+
+        <iframe id="scenario-preview" class="preview-frame" title="Scenario preview" src="about:blank"></iframe>
+    </div>
+
+    <script>
+        (function () {
+            var preview = document.getElementById("scenario-preview");
+            var status = document.getElementById("launcher-status");
+            var buttons = document.querySelectorAll("[data-load-preview]");
+            var cards = document.querySelectorAll("[data-scenario-card]");
+
+            function resetActiveCards() {
+                cards.forEach(function (card) {
+                    card.classList.remove("active-card");
+                });
+            }
+
+            function setStatus(text) {
+                status.textContent = text;
+            }
+
+            buttons.forEach(function (button) {
+                button.addEventListener("click", function () {
+                    var target = button.getAttribute("data-load-preview");
+                    resetActiveCards();
+                    button.closest(".card").classList.add("active-card");
+                    preview.src = target;
+                    setStatus("Preview loaded: " + target);
+                });
+            });
+
+            preview.addEventListener("load", function () {
+                if (preview.src && preview.src !== "about:blank") {
+                    setStatus("Preview ready: " + preview.contentWindow.location.pathname + preview.contentWindow.location.search);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

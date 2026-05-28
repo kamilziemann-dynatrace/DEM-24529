@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XHR Triggered in Load-Phase of a Page Load</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="back-link" href="index.html">← Back to XHR lifecycle patterns</a>
+
+    <div class="page-shell">
+        <h1>XHR Triggered in Load-Phase of a Page Load</h1>
+        <p class="lede">This page starts its XHR during the initial lifecycle using <code>DOMContentLoaded</code>, which keeps it close to the initial navigation.</p>
+
+        <div id="status" class="status-box running">Waiting for DOMContentLoaded...</div>
+        <div class="example-box">
+            <strong>Run mode:</strong> <span id="run-mode">manual mode</span><br>
+            This scenario auto-starts on every page load because the XHR belongs to the page load lifecycle.
+        </div>
+
+        <div class="button-row">
+            <button id="rerun-scenario">Run again</button>
+            <button id="clear-log" class="secondary">Clear log</button>
+        </div>
+
+        <div class="details">
+            <strong>Lifecycle markers:</strong>
+            <ul>
+                <li>The request starts from <code>DOMContentLoaded</code>.</li>
+                <li><code>window.load</code> is also logged so you can compare the two phases.</li>
+                <li>Use this page when you want the XHR to be associated with the initial load rather than a later user action.</li>
+            </ul>
+        </div>
+
+        <div id="event-log" class="log"></div>
+    </div>
+
+    <script src="scenario-utils.js"></script>
+    <script>
+        function runScenario(triggerSource) {
+            scenarioUtils.clearLog();
+            scenarioUtils.log("Scenario start from " + triggerSource + ".");
+            scenarioUtils.setStatus("Starting load-phase XHR...", "running");
+
+            scenarioUtils.xhrGet("fixtures/load-phase.json", "fixtures/load-phase.json")
+                .then(function (xhr) {
+                    var payload = scenarioUtils.readJson(xhr);
+                    scenarioUtils.log("Load-phase callback running. Payload step=" + (payload && payload.step), "success");
+                    scenarioUtils.setStatus("Load-phase XHR finished.", "success");
+                })
+                .catch(function (error) {
+                    scenarioUtils.log(error.message, "error");
+                    scenarioUtils.setStatus("Load-phase XHR failed.", "error");
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            scenarioUtils.updateRunMode();
+            scenarioUtils.log("DOMContentLoaded fired.");
+            runScenario("DOMContentLoaded");
+        }, { once: true });
+
+        window.addEventListener("load", function () {
+            scenarioUtils.log("window.load fired.");
+        }, { once: true });
+
+        document.getElementById("rerun-scenario").addEventListener("click", function () {
+            runScenario("manual rerun");
+        });
+
+        document.getElementById("clear-log").addEventListener("click", function () {
+            scenarioUtils.clearLog();
+            scenarioUtils.setStatus("Log cleared. Use Run again to repeat the request.");
+        });
+    </script>
+</body>
+</html>

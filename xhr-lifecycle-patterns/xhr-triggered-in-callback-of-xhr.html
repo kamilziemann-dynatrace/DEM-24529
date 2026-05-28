@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XHR Triggered in Callback of XHR</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="back-link" href="index.html">← Back to XHR lifecycle patterns</a>
+
+    <div class="page-shell">
+        <h1>XHR Triggered in Callback of XHR</h1>
+        <p class="lede">The second XHR is created only after the first one completes and its callback runs.</p>
+
+        <div id="status" class="status-box">Ready to run.</div>
+        <div class="example-box">
+            <strong>Run mode:</strong> <span id="run-mode">manual mode</span><br>
+            Add <code>?autorun=1</code> to the URL if you want the scenario to start automatically for Synthetic.
+        </div>
+
+        <div class="button-row">
+            <button id="run-scenario">Run scenario</button>
+            <button id="clear-log" class="secondary">Clear log</button>
+        </div>
+
+        <div class="details">
+            <strong>Expected order:</strong>
+            <ul>
+                <li>First XHR starts.</li>
+                <li>First XHR finishes.</li>
+                <li>Second XHR starts inside the first XHR callback.</li>
+                <li>Second XHR finishes.</li>
+            </ul>
+        </div>
+
+        <div id="event-log" class="log"></div>
+    </div>
+
+    <script src="scenario-utils.js"></script>
+    <script>
+        function runScenario() {
+            scenarioUtils.clearLog();
+            scenarioUtils.setStatus("Running first XHR...", "running");
+            scenarioUtils.log("Scenario start: second XHR will be created inside the first callback.");
+
+            scenarioUtils.xhrGet("fixtures/first.json", "fixtures/first.json")
+                .then(function (xhr) {
+                    var payload = scenarioUtils.readJson(xhr);
+                    scenarioUtils.log("First callback running. Payload step=" + (payload && payload.step), "success");
+                    scenarioUtils.setStatus("First callback active, starting second XHR...", "running");
+                    return scenarioUtils.xhrGet("fixtures/second.json", "fixtures/second.json");
+                })
+                .then(function (xhr) {
+                    var payload = scenarioUtils.readJson(xhr);
+                    scenarioUtils.log("Second callback running. Payload step=" + (payload && payload.step), "success");
+                    scenarioUtils.setStatus("Scenario finished.", "success");
+                })
+                .catch(function (error) {
+                    scenarioUtils.log(error.message, "error");
+                    scenarioUtils.setStatus("Scenario failed.", "error");
+                });
+        }
+
+        document.getElementById("run-scenario").addEventListener("click", runScenario);
+        document.getElementById("clear-log").addEventListener("click", function () {
+            scenarioUtils.clearLog();
+            scenarioUtils.setStatus("Ready to run.");
+        });
+
+        scenarioUtils.updateRunMode();
+
+        if (scenarioUtils.shouldAutorun()) {
+            window.addEventListener("load", runScenario, { once: true });
+        }
+    </script>
+</body>
+</html>

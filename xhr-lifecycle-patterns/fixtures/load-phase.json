@@ -1,0 +1,6 @@
+{
+    "name": "load-phase",
+    "scenario": "xhr-triggered-in-load-phase-of-page-load",
+    "step": 1,
+    "message": "This XHR belongs to the initial page lifecycle."
+}

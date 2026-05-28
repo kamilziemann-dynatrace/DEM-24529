@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Target</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="back-link" href="index.html">← Back to XHR lifecycle patterns</a>
+
+    <div class="page-shell">
+        <h1>Navigation Target Page</h1>
+        <p class="lede">If you reached this page from the previous scenario, the navigation from the XHR callback worked correctly.</p>
+
+        <div class="status-box success">Target page loaded.</div>
+        <div class="details">
+            <strong>Navigation details:</strong>
+            <ul id="details-list"></ul>
+        </div>
+
+        <div class="note">
+            For Synthetic, this page is the final landing point of the scenario <code>page load triggered in XHR callback</code>.
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var details = document.getElementById("details-list");
+
+            function addItem(label, value) {
+                var item = document.createElement("li");
+                item.textContent = label + ": " + value;
+                details.appendChild(item);
+            }
+
+            addItem("Source", params.get("source") || "direct visit");
+            addItem("Fixture", params.get("fixture") || "n/a");
+            addItem("Location", window.location.pathname + window.location.search);
+            addItem("Loaded at", new Date().toISOString());
+        })();
+    </script>
+</body>
+</html>

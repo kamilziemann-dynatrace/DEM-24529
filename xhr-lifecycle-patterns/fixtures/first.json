@@ -1,0 +1,6 @@
+{
+    "name": "first",
+    "scenario": "xhr-triggered-in-callback-of-xhr",
+    "step": 1,
+    "message": "The first XHR finished and can now start the second request."
+}

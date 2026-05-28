@@ -1,0 +1,6 @@
+{
+    "name": "second",
+    "scenario": "xhr-triggered-in-callback-of-xhr",
+    "step": 2,
+    "message": "This second XHR was started inside the callback of the first one."
+}

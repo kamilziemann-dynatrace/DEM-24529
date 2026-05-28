@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Load Triggered in XHR Callback</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="back-link" href="index.html">← Back to XHR lifecycle patterns</a>
+
+    <div class="page-shell">
+        <h1>Page Load Triggered in XHR Callback</h1>
+        <p class="lede">This page performs an XHR first, then navigates to <code>next-page.html</code> directly from the callback.</p>
+
+        <div id="status" class="status-box">Ready to run.</div>
+        <div class="example-box">
+            <strong>Run mode:</strong> <span id="run-mode">manual mode</span><br>
+            Add <code>?autorun=1</code> for automation, so the page navigates without clicking a button.
+        </div>
+
+        <div class="button-row">
+            <button id="run-scenario">Run scenario</button>
+            <button id="clear-log" class="secondary">Clear log</button>
+        </div>
+
+        <div class="details">
+            <strong>Expected order:</strong>
+            <ul>
+                <li>XHR starts.</li>
+                <li>XHR completes.</li>
+                <li>Callback changes <code>window.location.href</code>.</li>
+                <li>The browser loads <code>next-page.html</code>.</li>
+            </ul>
+        </div>
+
+        <div id="event-log" class="log"></div>
+    </div>
+
+    <script src="scenario-utils.js"></script>
+    <script>
+        function runScenario() {
+            scenarioUtils.clearLog();
+            scenarioUtils.setStatus("Running XHR before navigation...", "running");
+            scenarioUtils.log("Scenario start: callback will navigate to the next page.");
+
+            scenarioUtils.xhrGet("fixtures/before-navigation.json", "fixtures/before-navigation.json")
+                .then(function (xhr) {
+                    var payload = scenarioUtils.readJson(xhr);
+                    var target = scenarioUtils.withCacheBust("next-page.html?source=xhr-callback&fixture=" + encodeURIComponent(payload && payload.name || "before-navigation"));
+                    scenarioUtils.log("XHR callback running. Navigating to " + target, "success");
+                    scenarioUtils.setStatus("Navigating to next-page.html...", "running");
+                    window.location.href = target;
+                })
+                .catch(function (error) {
+                    scenarioUtils.log(error.message, "error");
+                    scenarioUtils.setStatus("Scenario failed.", "error");
+                });
+        }
+
+        document.getElementById("run-scenario").addEventListener("click", runScenario);
+        document.getElementById("clear-log").addEventListener("click", function () {
+            scenarioUtils.clearLog();
+            scenarioUtils.setStatus("Ready to run.");
+        });
+
+        scenarioUtils.updateRunMode();
+
+        if (scenarioUtils.shouldAutorun()) {
+            window.addEventListener("load", runScenario, { once: true });
+        }
+    </script>
+</body>
+</html>

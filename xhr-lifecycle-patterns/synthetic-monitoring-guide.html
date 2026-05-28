@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynatrace Synthetic Flow</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="back-link" href="index.html">← Back to XHR lifecycle patterns</a>
+
+    <div class="page-shell">
+        <h1>Dynatrace Synthetic Flow</h1>
+        <p class="lede">Recommended step-by-step setup for these three pages when you want a clean, repeatable Synthetic run and readable request ordering.</p>
+
+        <div class="note">
+            <strong>Recommendation:</strong> create three separate browser monitors, one per pattern. That gives you the clearest waterfall and avoids mixing unrelated requests in a single run.
+        </div>
+
+        <div class="step-list">
+            <section class="step-card">
+                <h3>1. Choose one scenario per monitor</h3>
+                <p>Use a dedicated monitor target URL instead of the launcher page or folder index.</p>
+                <div class="meta-list">
+                    <div class="meta-item"><code>xhr-triggered-in-callback-of-xhr.html?autorun=1</code></div>
+                    <div class="meta-item"><code>xhr-triggered-in-load-phase-of-page-load.html</code></div>
+                    <div class="meta-item"><code>page-load-triggered-in-xhr-callback.html?autorun=1</code></div>
+                </div>
+            </section>
+
+            <section class="step-card">
+                <h3>2. Use the GitHub Pages project URL as base</h3>
+                <p>For this repository, the expected project-site base path is:</p>
+                <div class="example-box"><code>https://kamilziemann-dynatrace.github.io/DEM-24529/xhr-lifecycle-patterns/</code></div>
+                <p>Append the selected scenario path directly after that base.</p>
+            </section>
+
+            <section class="step-card">
+                <h3>3. Keep the script simple</h3>
+                <p>For the two autorun scenarios, a single open-page step is enough. Wait for page stability or the final target page, then stop. Do not add extra clicks unless you are intentionally testing manual interaction.</p>
+            </section>
+
+            <section class="step-card">
+                <h3>4. Interpret each pattern correctly</h3>
+                <p><strong>XHR triggered in callback of XHR:</strong> expect two same-origin XHR requests in sequence, where the second begins only after the first callback runs.</p>
+                <p><strong>XHR triggered in load-phase of a page load:</strong> expect the request to appear during the initial load lifecycle of that page.</p>
+                <p><strong>Page load triggered in XHR callback:</strong> expect one XHR first, then a real page navigation to <code>next-page.html</code>.</p>
+            </section>
+
+            <section class="step-card">
+                <h3>5. Use the right success condition</h3>
+                <p>For the navigation scenario, assert the final URL contains <code>next-page.html</code>. For the other two, success is simply a 200 response from the expected fixture requests and a stable page state.</p>
+            </section>
+
+            <section class="step-card">
+                <h3>6. Know the GitHub Pages limitation</h3>
+                <p>GitHub Pages is static hosting. You can validate order and correlation, but not controlled backend latency. If you need guaranteed 300-800 ms server delay, host the JSON endpoints on a small backend instead.</p>
+            </section>
+        </div>
+
+        <div class="details">
+            <strong>Practical monitor split:</strong>
+            <div class="meta-list">
+                <div class="meta-item">Monitor A: sequential XHR chaining.</div>
+                <div class="meta-item">Monitor B: load-phase request on initial page lifecycle.</div>
+                <div class="meta-item">Monitor C: XHR followed by navigation to a new page.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
